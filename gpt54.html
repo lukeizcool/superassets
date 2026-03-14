@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Tracker</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-2: #0f172a;
+      --panel: rgba(15, 23, 42, 0.72);
+      --panel-solid: #111827;
+      --panel-soft: rgba(30, 41, 59, 0.72);
+      --line: rgba(148, 163, 184, 0.16);
+      --line-strong: rgba(148, 163, 184, 0.26);
+      --text: #e5eefc;
+      --muted: #9fb0cd;
+      --accent: #7c3aed;
+      --accent-2: #22c55e;
+      --accent-3: #38bdf8;
+      --danger: #fb7185;
+      --warn: #f59e0b;
+      --shadow: 0 18px 60px rgba(2, 8, 23, 0.45);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 28%),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.18), transparent 24%),
+        linear-gradient(180deg, #09111f 0%, #0b1020 42%, #0f172a 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero,
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      border-radius: 32px;
+      padding: 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: auto -90px -120px auto;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.28) 0%, transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(124, 58, 237, 0.34);
+      background: rgba(124, 58, 237, 0.14);
+      color: #ddd6fe;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .hero h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p,
+    .muted,
+    .hint {
+      color: var(--muted);
+    }
+
+    .hero p {
+      max-width: 900px;
+      line-height: 1.7;
+      font-size: 15px;
+      margin: 0;
+    }
+
+    .action-row,
+    .toolbar,
+    .tabbar,
+    .mini-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .action-row { margin-top: 18px; }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 11px 15px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+      color: white;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.28);
+    }
+
+    .btn-secondary {
+      background: rgba(148, 163, 184, 0.08);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981 0%, #22c55e 100%);
+      color: white;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn-danger {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(251, 113, 133, 0.34);
+      color: #fecdd3;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat-card {
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 90px;
+      height: 90px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      margin-top: 10px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      border-radius: var(--radius-xl);
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .panel-header h2,
+    .panel-header h3 {
+      letter-spacing: -0.03em;
+    }
+
+    .field-grid,
+    .field-grid-2,
+    .field-grid-3 {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .field-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #bfd0ec;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      outline: none;
+      background: rgba(15, 23, 42, 0.76);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 12px 14px;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder { color: #6f85a9; }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: rgba(96, 165, 250, 0.7);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .field textarea {
+      min-height: 104px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .list-shell {
+      display: grid;
+      gap: 10px;
+      max-height: 760px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .asset-card {
+      border-radius: 20px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.62);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .asset-card:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+    }
+
+    .asset-card.active {
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.22) 0%, rgba(15, 23, 42, 0.95) 100%);
+      border-color: rgba(139, 92, 246, 0.58);
+      box-shadow: 0 18px 35px rgba(76, 29, 149, 0.22);
+    }
+
+    .asset-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .asset-name {
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(96, 165, 250, 0.12);
+      color: #bfdbfe;
+      white-space: nowrap;
+    }
+
+    .detail-shell {
+      display: grid;
+      gap: 18px;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .detail-title h2 {
+      margin-bottom: 6px;
+    }
+
+    .import-drop {
+      border: 1.5px dashed rgba(96, 165, 250, 0.5);
+      border-radius: 20px;
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.86));
+    }
+
+    .table-shell,
+    .codebox {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      overflow: auto;
+      background: rgba(15, 23, 42, 0.86);
+    }
+
+    .codebox {
+      padding: 16px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      line-height: 1.55;
+      font-size: 13px;
+      min-height: 180px;
+      color: #dbe8ff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a9bbd8;
+      background: rgba(30, 41, 59, 0.74);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover {
+      background: rgba(148, 163, 184, 0.05);
+    }
+
+    .tabbar {
+      margin-bottom: 14px;
+    }
+
+    .tabbtn {
+      background: rgba(148, 163, 184, 0.08);
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .tabbtn.active {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.16));
+      color: white;
+      border-color: rgba(139, 92, 246, 0.44);
+    }
+
+    .hidden { display: none !important; }
+
+    .section-note {
+      border-radius: 18px;
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      background: rgba(14, 165, 233, 0.08);
+      padding: 12px 14px;
+      color: #caeaff;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .subgrid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .subpanel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(2, 6, 23, 0.22);
+      padding: 16px;
+    }
+
+    .small {
+      font-size: 12px;
+    }
+
+    @media (max-width: 1200px) {
+      .layout { grid-template-columns: 1fr; }
+      .field-grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .field-grid-3,
+      .field-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .shell { padding: 14px; }
+      .hero,
+      .panel { padding: 16px; border-radius: 22px; }
+      .stats { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Modern asset operations</div>
+          <h1>Asset Hub</h1>
+          <p>
+            A cleaner, faster single-file asset tracker with PDF intake, flexible records, and SharePoint-ready exports.
+            Built to feel more like a streamlined operations dashboard than a spreadsheet.
+          </p>
+        </div>
+        <div class="toolbar">
+          <button class="btn-primary" onclick="addAsset()">New Asset</button>
+          <button class="btn-secondary" onclick="saveState()">Save Browser Copy</button>
+          <button class="btn-secondary" onclick="loadState()">Load</button>
+          <button class="btn-danger" onclick="resetDemo()">Reset</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">In Service</div>
+          <div class="stat-value" id="statInService">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Maintenance Due</div>
+          <div class="stat-value" id="statMaintenance">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Assigned Users</div>
+          <div class="stat-value" id="statAssigned">0</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="stack">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Asset Library</h2>
+              <div class="muted small">Search, filter, and jump between records.</div>
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Search</label>
+              <input id="search" placeholder="Name, tag, serial, user, location" oninput="renderAssetList()" />
+            </div>
+          </div>
+          <div class="field-grid-2" style="margin-top:12px;">
+            <div class="field">
+              <label>Status</label>
+              <select id="filterStatus" onchange="renderAssetList()">
+                <option value="all">All</option>
+                <option>In Service</option>
+                <option>In Storage</option>
+                <option>Retired</option>
+                <option>Repair</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Category</label>
+              <select id="filterCategory" onchange="renderAssetList()">
+                <option value="all">All</option>
+                <option>Laptop</option>
+                <option>Desktop</option>
+                <option>Phone</option>
+                <option>Tablet</option>
+                <option>Monitor</option>
+                <option>Printer</option>
+                <option>Vehicle</option>
+                <option>Furniture</option>
+                <option>Network</option>
+                <option>Tool</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div id="assetList" class="list-shell" style="margin-top:14px;"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Import from PDF</h3>
+              <div class="muted small">Pull asset data from inventory reports and audit exports.</div>
+            </div>
+          </div>
+          <div class="import-drop">
+            <div style="font-weight:800; margin-bottom:6px;">Upload PDF inventory</div>
+            <div class="hint small" style="margin-bottom:12px; line-height:1.6;">
+              Works best with text-based PDFs that contain exported rows or inventory-style tables.
+            </div>
+            <input type="file" id="pdfFile" accept="application/pdf" />
+            <div class="action-row">
+              <button class="btn-primary" onclick="importPdf()">Parse PDF</button>
+              <button class="btn-secondary" onclick="applyParsedRows()">Add Parsed Rows</button>
+            </div>
+          </div>
+          <div class="field" style="margin-top:14px;">
+            <label>Detected Rows Preview</label>
+            <textarea id="pdfPreview" placeholder="Parsed rows will appear here..."></textarea>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Data Exchange</h3>
+              <div class="muted small">Back up locally or export for SharePoint / Microsoft Lists.</div>
+            </div>
+          </div>
+          <div class="toolbar">
+            <input type="file" id="jsonFile" accept="application/json" onchange="importJsonFile(event)" />
+          </div>
+          <div class="action-row">
+            <button class="btn-secondary" onclick="exportJson()">Export JSON</button>
+            <button class="btn-secondary" onclick="exportCsv('standard')">Export CSV</button>
+            <button class="btn-emerald" onclick="exportCsv('sharepoint')">Export SharePoint CSV</button>
+          </div>
+        </section>
+      </aside>
+
+      <main class="detail-shell">
+        <section class="panel">
+          <div class="detail-header">
+            <div class="detail-title">
+              <h2>Asset Details</h2>
+              <div class="muted" id="activeMeta">Select or create an asset record.</div>
+            </div>
+            <div class="mini-actions">
+              <button class="btn-secondary" onclick="duplicateAsset()">Duplicate</button>
+              <button class="btn-danger" onclick="deleteAsset()">Delete</button>
+            </div>
+          </div>
+
+          <div class="subgrid">
+            <div class="subpanel">
+              <div class="field-grid-3">
+                <div class="field"><label>Asset Name</label><input id="assetName" oninput="updateAssetField('name', this.value)" /></div>
+                <div class="field"><label>Asset Tag</label><input id="assetTag" oninput="updateAssetField('assetTag', this.value)" /></div>
+                <div class="field"><label>Serial Number</label><input id="serialNumber" oninput="updateAssetField('serialNumber', this.value)" /></div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-3">
+                <div class="field"><label>Category</label>
+                  <select id="category" onchange="updateAssetField('category', this.value)">
+                    <option>Laptop</option><option>Desktop</option><option>Phone</option><option>Tablet</option><option>Monitor</option><option>Printer</option><option>Vehicle</option><option>Furniture</option><option>Network</option><option>Tool</option><option>Other</option>
+                  </select>
+                </div>
+                <div class="field"><label>Status</label>
+                  <select id="status" onchange="updateAssetField('status', this.value)">
+                    <option>In Service</option><option>In Storage</option><option>Retired</option><option>Repair</option>
+                  </select>
+                </div>
+                <div class="field"><label>Condition</label>
+                  <select id="condition" onchange="updateAssetField('condition', this.value)">
+                    <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-3">
+                <div class="field"><label>Manufacturer</label><input id="manufacturer" oninput="updateAssetField('manufacturer', this.value)" /></div>
+                <div class="field"><label>Model</label><input id="model" oninput="updateAssetField('model', this.value)" /></div>
+                <div class="field"><label>Vendor</label><input id="vendor" oninput="updateAssetField('vendor', this.value)" /></div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-3">
+                <div class="field"><label>Purchase Date</label><input id="purchaseDate" type="date" oninput="updateAssetField('purchaseDate', this.value)" /></div>
+                <div class="field"><label>Purchase Cost</label><input id="purchaseCost" oninput="updateAssetField('purchaseCost', this.value)" /></div>
+                <div class="field"><label>Warranty Expiration</label><input id="warrantyExpiration" type="date" oninput="updateAssetField('warrantyExpiration', this.value)" /></div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-3">
+                <div class="field"><label>Maintenance Due</label><input id="maintenanceDue" type="date" oninput="updateAssetField('maintenanceDue', this.value)" /></div>
+                <div class="field"><label>Assigned To</label><input id="assignedTo" oninput="updateAssetField('assignedTo', this.value)" /></div>
+                <div class="field"><label>Department</label><input id="department" oninput="updateAssetField('department', this.value)" /></div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-2">
+                <div class="field"><label>Location</label><input id="location" oninput="updateAssetField('location', this.value)" /></div>
+                <div class="field"><label>QR / Barcode Value</label><input id="barcode" oninput="updateAssetField('barcode', this.value)" /></div>
+              </div>
+            </div>
+
+            <div class="subpanel">
+              <div class="field-grid-2">
+                <div class="field"><label>Notes</label><textarea id="notes" oninput="updateAssetField('notes', this.value)"></textarea></div>
+                <div class="field"><label>Custom Fields (JSON object)</label><textarea id="customFields" oninput="updateCustomFields(this.value)" placeholder='{"Building":"HQ","CostCenter":"IT-204"}'></textarea></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <h2>Exports & Preview</h2>
+              <div class="muted small">Review the normalized data before importing it into SharePoint.</div>
+            </div>
+          </div>
+
+          <div class="tabbar">
+            <button class="tabbtn active" id="tabBtnTable" onclick="showTab('table')">Asset Table</button>
+            <button class="tabbtn" id="tabBtnCsv" onclick="showTab('csv')">SharePoint CSV</button>
+            <button class="tabbtn" id="tabBtnMap" onclick="showTab('mapping')">Column Mapping</button>
+            <button class="tabbtn" id="tabBtnApi" onclick="showTab('api')">API Helper</button>
+          </div>
+
+          <div id="tabTable">
+            <div class="table-shell"><table id="assetTable"></table></div>
+          </div>
+
+          <div id="tabCsv" class="hidden">
+            <div class="codebox" id="csvPreview"></div>
+          </div>
+
+          <div id="tabMapping" class="hidden">
+            <div class="section-note" style="margin-bottom:14px;">
+              Create these columns in SharePoint / Microsoft Lists before importing the SharePoint CSV for the cleanest results.
+            </div>
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr><th>CSV Column</th><th>Suggested Type</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Title</td><td>Single line of text</td><td>Use asset name as the main title.</td></tr>
+                  <tr><td>AssetTag</td><td>Single line of text</td><td>Good candidate for a unique field.</td></tr>
+                  <tr><td>SerialNumber</td><td>Single line of text</td><td>Useful for duplicate checking.</td></tr>
+                  <tr><td>Category</td><td>Choice</td><td>Laptop, Desktop, Phone, and so on.</td></tr>
+                  <tr><td>Status</td><td>Choice</td><td>In Service, In Storage, Retired, Repair.</td></tr>
+                  <tr><td>Condition</td><td>Choice</td><td>Excellent, Good, Fair, Poor.</td></tr>
+                  <tr><td>Manufacturer</td><td>Single line of text</td><td></td></tr>
+                  <tr><td>Model</td><td>Single line of text</td><td></td></tr>
+                  <tr><td>PurchaseDate</td><td>Date</td><td></td></tr>
+                  <tr><td>PurchaseCost</td><td>Currency or Number</td><td></td></tr>
+                  <tr><td>WarrantyExpiration</td><td>Date</td><td></td></tr>
+                  <tr><td>MaintenanceDue</td><td>Date</td><td></td></tr>
+                  <tr><td>AssignedTo</td><td>Single line of text or Person</td><td>CSV import is simplest as text.</td></tr>
+                  <tr><td>Department</td><td>Single line of text or Choice</td><td></td></tr>
+                  <tr><td>Location</td><td>Single line of text</td><td></td></tr>
+                  <tr><td>Vendor</td><td>Single line of text</td><td></td></tr>
+                  <tr><td>Barcode</td><td>Single line of text</td><td></td></tr>
+                  <tr><td>Notes</td><td>Multiple lines of text</td><td>Longer notes may be trimmed depending on import path.</td></tr>
+                  <tr><td>CustomFieldsJson</td><td>Multiple lines of text</td><td>Stores extra structured values.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="tabApi" class="hidden">
+            <div class="section-note" style="margin-bottom:14px;">
+              Static HTML pages usually cannot post directly to SharePoint without an authenticated context or token. Exporting the SharePoint CSV is the most reliable route, but this helper gives you a ready-to-wire REST example.
+            </div>
+            <div class="field-grid-2" style="margin-bottom:14px;">
+              <div class="field"><label>Site URL</label><input id="spSiteUrl" placeholder="https://yourtenant.sharepoint.com/sites/Operations" oninput="renderApiPreview()" /></div>
+              <div class="field"><label>List Name</label><input id="spListName" placeholder="Assets" oninput="renderApiPreview()" /></div>
+            </div>
+            <div class="codebox" id="apiPreview"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js"></script>
+  <script>
+    const STORAGE_KEY = 'asset_tracker_single_html_v1';
+    let currentTab = 'table';
+    let parsedRows = [];
+
+    function cryptoRandom() {
+      return 'id-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    }
+
+    const demoAssets = [
+      {
+        id: cryptoRandom(),
+        name: 'Dell Latitude 7440',
+        assetTag: 'LT-2045',
+        serialNumber: 'DL7440-88AX12',
+        category: 'Laptop',
+        status: 'In Service',
+        condition: 'Good',
+        manufacturer: 'Dell',
+        model: 'Latitude 7440',
+        purchaseDate: '2025-04-14',
+        purchaseCost: '1389.00',
+        warrantyExpiration: '2028-04-14',
+        maintenanceDue: '',
+        assignedTo: 'Ariana Cole',
+        department: 'Finance',
+        location: 'HQ / Floor 3',
+        vendor: 'CDW',
+        barcode: 'LT-2045',
+        notes: 'Docking station issued with laptop.',
+        customFields: { CostCenter: 'FIN-301', Building: 'HQ' }
+      },
+      {
+        id: cryptoRandom(),
+        name: 'iPhone 15',
+        assetTag: 'PH-1108',
+        serialNumber: 'IPH15-774QS',
+        category: 'Phone',
+        status: 'In Service',
+        condition: 'Excellent',
+        manufacturer: 'Apple',
+        model: 'iPhone 15',
+        purchaseDate: '2025-09-02',
+        purchaseCost: '899.00',
+        warrantyExpiration: '2026-09-02',
+        maintenanceDue: '',
+        assignedTo: 'Jon Rivera',
+        department: 'Field Operations',
+        location: 'Assigned / Mobile',
+        vendor: 'Verizon',
+        barcode: 'PH-1108',
+        notes: 'eSIM activated.',
+        customFields: { MobilePlan: 'Ops Unlimited' }
+      },
+      {
+        id: cryptoRandom(),
+        name: 'HP LaserJet Pro 4001',
+        assetTag: 'PR-0880',
+        serialNumber: 'HP4001-33LK2',
+        category: 'Printer',
+        status: 'Repair',
+        condition: 'Fair',
+        manufacturer: 'HP',
+        model: 'LaserJet Pro 4001',
+        purchaseDate: '2023-01-10',
+        purchaseCost: '429.00',
+        warrantyExpiration: '2026-01-10',
+        maintenanceDue: '2026-03-25',
+        assignedTo: 'Office Services',
+        department: 'Admin',
+        location: 'Annex / Copy Room',
+        vendor: 'Staples',
+        barcode: 'PR-0880',
+        notes: 'Paper feed issue under review.',
+        customFields: { SupportTicket: 'INC-24519' }
+      }
+    ];
+
+    let state = {
+      assets: JSON.parse(JSON.stringify(demoAssets)),
+      activeId: demoAssets[0].id
+    };
+
+    function emptyAsset() {
+      return {
+        id: cryptoRandom(),
+        name: 'New Asset',
+        assetTag: '',
+        serialNumber: '',
+        category: 'Other',
+        status: 'In Service',
+        condition: 'Good',
+        manufacturer: '',
+        model: '',
+        purchaseDate: '',
+        purchaseCost: '',
+        warrantyExpiration: '',
+        maintenanceDue: '',
+        assignedTo: '',
+        department: '',
+        location: '',
+        vendor: '',
+        barcode: '',
+        notes: '',
+        customFields: {}
+      };
+    }
+
+    function activeAsset() {
+      return state.assets.find(a => a.id === state.activeId) || state.assets[0] || null;
+    }
+
+    function filteredAssets() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+      const category = document.getElementById('filterCategory').value;
+      return state.assets.filter(a => {
+        const hay = [a.name, a.assetTag, a.serialNumber, a.assignedTo, a.location, a.department, a.manufacturer, a.model].join(' ').toLowerCase();
+        return (!q || hay.includes(q)) && (status === 'all' || a.status === status) && (category === 'all' || a.category === category);
+      });
+    }
+
+    function renderStats() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('statTotal').textContent = state.assets.length;
+      document.getElementById('statInService').textContent = state.assets.filter(a => a.status === 'In Service').length;
+      document.getElementById('statMaintenance').textContent = state.assets.filter(a => a.maintenanceDue && a.maintenanceDue <= today).length;
+      document.getElementById('statAssigned').textContent = new Set(state.assets.map(a => a.assignedTo).filter(Boolean)).size;
+    }
+
+    function renderAssetList() {
+      const wrap = document.getElementById('assetList');
+      wrap.innerHTML = '';
+      filteredAssets().forEach(asset => {
+        const div = document.createElement('div');
+        div.className = 'asset-card' + (asset.id === state.activeId ? ' active' : '');
+        div.onclick = () => { state.activeId = asset.id; renderAll(); };
+        div.innerHTML = `
+          <div class="asset-top">
+            <div>
+              <div class="asset-name">${escapeHtml(asset.name || 'Untitled Asset')}</div>
+              <div class="muted small" style="margin-top:4px;">${escapeHtml(asset.assetTag || 'No tag')} · ${escapeHtml(asset.serialNumber || 'No serial')}</div>
+            </div>
+            <div class="chip">${escapeHtml(asset.status)}</div>
+          </div>
+          <div class="muted small" style="margin-top:10px;">${escapeHtml(asset.category)} · ${escapeHtml(asset.assignedTo || 'Unassigned')}</div>
+          <div class="muted small" style="margin-top:4px;">${escapeHtml(asset.location || 'No location')}</div>`;
+        wrap.appendChild(div);
+      });
+      if (!wrap.innerHTML) wrap.innerHTML = '<div class="muted small">No assets match the current filters.</div>';
+      renderStats();
+    }
+
+    function setValue(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.value = value || '';
+    }
+
+    function renderDetails() {
+      const a = activeAsset();
+      if (!a) return;
+      setValue('assetName', a.name);
+      setValue('assetTag', a.assetTag);
+      setValue('serialNumber', a.serialNumber);
+      setValue('category', a.category || 'Other');
+      setValue('status', a.status || 'In Service');
+      setValue('condition', a.condition || 'Good');
+      setValue('manufacturer', a.manufacturer);
+      setValue('model', a.model);
+      setValue('purchaseDate', a.purchaseDate);
+      setValue('purchaseCost', a.purchaseCost);
+      setValue('warrantyExpiration', a.warrantyExpiration);
+      setValue('maintenanceDue', a.maintenanceDue);
+      setValue('assignedTo', a.assignedTo);
+      setValue('department', a.department);
+      setValue('location', a.location);
+      setValue('vendor', a.vendor);
+      setValue('barcode', a.barcode);
+      setValue('notes', a.notes);
+      setValue('customFields', JSON.stringify(a.customFields || {}, null, 2));
+      document.getElementById('activeMeta').textContent = `${a.category || 'Other'} · ${a.status || 'In Service'} · ${a.assetTag || 'No tag'}`;
+    }
+
+    function updateAssetField(field, value) {
+      const a = activeAsset();
+      if (!a) return;
+      a[field] = value;
+      renderAssetList();
+      renderTable();
+      renderCsvPreview();
+      renderApiPreview();
+    }
+
+    function updateCustomFields(raw) {
+      const a = activeAsset();
+      if (!a) return;
+      try {
+        a.customFields = raw.trim() ? JSON.parse(raw) : {};
+        document.getElementById('customFields').style.borderColor = 'var(--line)';
+        renderTable();
+        renderCsvPreview();
+      } catch (e) {
+        document.getElementById('customFields').style.borderColor = '#fb7185';
+      }
+    }
+
+    function addAsset() {
+      const a = emptyAsset();
+      state.assets.unshift(a);
+      state.activeId = a.id;
+      renderAll();
+    }
+
+    function duplicateAsset() {
+      const a = activeAsset();
+      if (!a) return;
+      const copy = JSON.parse(JSON.stringify(a));
+      copy.id = cryptoRandom();
+      copy.name = `${a.name} Copy`;
+      copy.assetTag = '';
+      copy.serialNumber = '';
+      state.assets.unshift(copy);
+      state.activeId = copy.id;
+      renderAll();
+    }
+
+    function deleteAsset() {
+      if (state.assets.length <= 1) return alert('Keep at least one asset in the workspace.');
+      state.assets = state.assets.filter(a => a.id !== state.activeId);
+      state.activeId = state.assets[0].id;
+      renderAll();
+    }
+
+    function tableRows() {
+      return state.assets.map(a => ({
+        Title: a.name || '',
+        AssetTag: a.assetTag || '',
+        SerialNumber: a.serialNumber || '',
+        Category: a.category || '',
+        Status: a.status || '',
+        Condition: a.condition || '',
+        Manufacturer: a.manufacturer || '',
+        Model: a.model || '',
+        PurchaseDate: a.purchaseDate || '',
+        PurchaseCost: a.purchaseCost || '',
+        WarrantyExpiration: a.warrantyExpiration || '',
+        MaintenanceDue: a.maintenanceDue || '',
+        AssignedTo: a.assignedTo || '',
+        Department: a.department || '',
+        Location: a.location || '',
+        Vendor: a.vendor || '',
+        Barcode: a.barcode || '',
+        Notes: a.notes || '',
+        CustomFieldsJson: JSON.stringify(a.customFields || {})
+      }));
+    }
+
+    function renderTable() {
+      const table = document.getElementById('assetTable');
+      const rows = tableRows();
+      if (!rows.length) { table.innerHTML = '<tr><td>No assets</td></tr>'; return; }
+      const headers = Object.keys(rows[0]);
+      table.innerHTML = `<thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>` +
+        '<tbody>' + rows.map(row => `<tr>${headers.map(h => `<td>${escapeHtml(row[h] ?? '')}</td>`).join('')}</tr>`).join('') + '</tbody>';
+    }
+
+    function toCsv(rows) {
+      if (!rows.length) return '';
+      const headers = Object.keys(rows[0]);
+      const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      return [headers.map(esc).join(',')].concat(rows.map(r => headers.map(h => esc(r[h])).join(','))).join('\n');
+    }
+
+    function sharePointRows() {
+      return state.assets.map(a => ({
+        Title: a.name || '',
+        AssetTag: a.assetTag || '',
+        SerialNumber: a.serialNumber || '',
+        Category: a.category || '',
+        Status: a.status || '',
+        Condition: a.condition || '',
+        Manufacturer: a.manufacturer || '',
+        Model: a.model || '',
+        PurchaseDate: a.purchaseDate || '',
+        PurchaseCost: a.purchaseCost || '',
+        WarrantyExpiration: a.warrantyExpiration || '',
+        MaintenanceDue: a.maintenanceDue || '',
+        AssignedTo: a.assignedTo || '',
+        Department: a.department || '',
+        Location: a.location || '',
+        Vendor: a.vendor || '',
+        Barcode: a.barcode || '',
+        Notes: a.notes || '',
+        CustomFieldsJson: JSON.stringify(a.customFields || {})
+      }));
+    }
+
+    function renderCsvPreview() {
+      document.getElementById('csvPreview').textContent = toCsv(sharePointRows()) || 'No data yet.';
+    }
+
+    function exportCsv(mode) {
+      const rows = mode === 'sharepoint' ? sharePointRows() : tableRows();
+      const csv = toCsv(rows);
+      if (!csv) return alert('No rows to export.');
+      downloadFile(csv, mode === 'sharepoint' ? 'asset-sharepoint-import.csv' : 'asset-export.csv', 'text/csv;charset=utf-8;');
+    }
+
+    function exportJson() {
+      downloadFile(JSON.stringify(state, null, 2), 'asset-tracker-backup.json', 'application/json');
+    }
+
+    function importJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (!Array.isArray(data.assets)) throw new Error('Invalid backup file.');
+          state = data;
+          if (!state.activeId && state.assets[0]) state.activeId = state.assets[0].id;
+          renderAll();
+          alert('JSON backup imported.');
+        } catch (e) {
+          alert('Could not import JSON: ' + e.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      alert('Saved in this browser.');
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return alert('No saved browser copy found.');
+      try {
+        state = JSON.parse(raw);
+        renderAll();
+        alert('Loaded saved browser copy.');
+      } catch (e) {
+        alert('Saved data could not be loaded.');
+      }
+    }
+
+    function resetDemo() {
+      state = { assets: JSON.parse(JSON.stringify(demoAssets)), activeId: demoAssets[0].id };
+      parsedRows = [];
+      setValue('pdfPreview', '');
+      renderAll();
+    }
+
+    function showTab(name) {
+      currentTab = name;
+      ['table', 'csv', 'mapping', 'api'].forEach(tab => {
+        document.getElementById('tab' + capitalize(tab)).classList.toggle('hidden', tab !== name);
+        document.getElementById('tabBtn' + capitalize(tab)).classList.toggle('active', tab === name);
+      });
+      if (name === 'csv') renderCsvPreview();
+      if (name === 'api') renderApiPreview();
+    }
+
+    function capitalize(x) {
+      return x.charAt(0).toUpperCase() + x.slice(1);
+    }
+
+    function renderApiPreview() {
+      const siteUrl = document.getElementById('spSiteUrl').value.trim() || 'https://yourtenant.sharepoint.com/sites/Operations';
+      const listName = document.getElementById('spListName').value.trim() || 'Assets';
+      const a = activeAsset() || emptyAsset();
+      const payload = {
+        Title: a.name || '',
+        AssetTag: a.assetTag || '',
+        SerialNumber: a.serialNumber || '',
+        Category: a.category || '',
+        Status: a.status || '',
+        Condition: a.condition || '',
+        Manufacturer: a.manufacturer || '',
+        Model: a.model || '',
+        PurchaseDate: a.purchaseDate || null,
+        PurchaseCost: a.purchaseCost || null,
+        WarrantyExpiration: a.warrantyExpiration || null,
+        MaintenanceDue: a.maintenanceDue || null,
+        AssignedTo: a.assignedTo || '',
+        Department: a.department || '',
+        Location: a.location || '',
+        Vendor: a.vendor || '',
+        Barcode: a.barcode || '',
+        Notes: a.notes || '',
+        CustomFieldsJson: JSON.stringify(a.customFields || {})
+      };
+      const code = `const siteUrl = ${JSON.stringify(siteUrl)};\nconst listName = ${JSON.stringify(listName)};\nconst item = ${JSON.stringify(payload, null, 2)};\n\nfetch(\`${siteUrl}/_api/web/lists/GetByTitle('${listName}')/items\`, {\n  method: 'POST',\n  headers: {\n    'Accept': 'application/json;odata=verbose',\n    'Content-Type': 'application/json;odata=verbose',\n    'X-RequestDigest': 'FORM_DIGEST_VALUE_OR_TOKEN'\n  },\n  body: JSON.stringify(item)\n});`;
+      document.getElementById('apiPreview').textContent = code;
+    }
+
+    async function importPdf() {
+      const file = document.getElementById('pdfFile').files[0];
+      if (!file) return alert('Choose a PDF file first.');
+      if (!window['pdfjsLib']) return alert('PDF parser failed to load.');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js';
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+      let fullText = '';
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const text = content.items.map(i => i.str).join(' ');
+        fullText += text + '\n';
+      }
+      parsedRows = parseAssetText(fullText);
+      document.getElementById('pdfPreview').value = parsedRows.length
+        ? parsedRows.map(r => JSON.stringify(r)).join('\n')
+        : 'No structured rows detected. Try a table-style PDF or a text-based export.';
+      alert(`Parsed ${parsedRows.length} candidate asset row(s).`);
+    }
+
+    function parseAssetText(text) {
+      const lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean);
+      const rows = [];
+      const seen = new Set();
+
+      const patterns = {
+        assetTag: /(asset\s*tag|tag|id)[:#\s-]*([A-Z]{1,5}[- ]?\d{2,10})/i,
+        serialNumber: /(serial(\s*number)?|s\/n|sn)[:#\s-]*([A-Z0-9-]{5,})/i,
+        assignedTo: /(assigned\s*to|user|employee)[:#\s-]*([A-Z][A-Za-z,. '\-]{3,})/i,
+        location: /(location|site|room|building)[:#\s-]*([A-Za-z0-9\/,. '\-]{2,})/i,
+        manufacturerModel: /(dell|hp|apple|lenovo|microsoft|samsung|acer|asus|panasonic|zebra)\s+([A-Za-z0-9\- ]{2,40})/i
+      };
+
+      for (const line of lines) {
+        const hasTag = line.match(patterns.assetTag);
+        const hasSerial = line.match(patterns.serialNumber);
+        const hasMaker = line.match(patterns.manufacturerModel);
+        if (!(hasTag || hasSerial || hasMaker)) continue;
+
+        const row = emptyAsset();
+        row.name = '';
+        row.category = inferCategory(line);
+        row.status = 'In Service';
+        row.condition = 'Good';
+
+        const tagMatch = line.match(patterns.assetTag);
+        if (tagMatch) row.assetTag = (tagMatch[2] || '').replace(/\s+/g, ' ').trim();
+
+        const serialMatch = line.match(patterns.serialNumber);
+        if (serialMatch) row.serialNumber = (serialMatch[3] || '').trim();
+
+        const assignMatch = line.match(patterns.assignedTo);
+        if (assignMatch) row.assignedTo = (assignMatch[2] || '').trim();
+
+        const locationMatch = line.match(patterns.location);
+        if (locationMatch) row.location = (locationMatch[2] || '').trim();
+
+        const mm = line.match(patterns.manufacturerModel);
+        if (mm) {
+          row.manufacturer = titleCase(mm[1]);
+          row.model = mm[2].trim();
+          row.name = `${row.manufacturer} ${row.model}`.trim();
+        }
+
+        if (!row.name) row.name = inferName(line, row.category, row.manufacturer, row.model);
+        row.notes = line.slice(0, 350);
+        const key = `${row.assetTag}|${row.serialNumber}|${row.name}`;
+        if ((row.assetTag || row.serialNumber || row.name) && !seen.has(key)) {
+          seen.add(key);
+          rows.push(row);
+        }
+      }
+
+      if (!rows.length) {
+        const serialRegex = /([A-Z]{2,5}[- ]?\d{2,10}).{0,80}?([A-Z0-9-]{6,})/g;
+        const fallback = Array.from(text.matchAll(serialRegex));
+        fallback.forEach(match => {
+          const row = emptyAsset();
+          row.assetTag = match[1].replace(/\s+/g, ' ').trim();
+          row.serialNumber = match[2].trim();
+          row.name = 'Imported Asset';
+          row.category = 'Other';
+          row.notes = match[0].slice(0, 350);
+          rows.push(row);
+        });
+      }
+      return rows.slice(0, 500);
+    }
+
+    function inferCategory(text) {
+      const t = text.toLowerCase();
+      if (/laptop|latitude|thinkpad|macbook/.test(t)) return 'Laptop';
+      if (/desktop|optiplex|workstation/.test(t)) return 'Desktop';
+      if (/iphone|galaxy|pixel|phone/.test(t)) return 'Phone';
+      if (/ipad|tablet|surface go/.test(t)) return 'Tablet';
+      if (/monitor|display/.test(t)) return 'Monitor';
+      if (/printer|laserjet|officejet/.test(t)) return 'Printer';
+      if (/switch|router|firewall|access point/.test(t)) return 'Network';
+      if (/chair|desk|cabinet/.test(t)) return 'Furniture';
+      if (/vehicle|truck|van/.test(t)) return 'Vehicle';
+      if (/tool|drill|meter/.test(t)) return 'Tool';
+      return 'Other';
+    }
+
+    function inferName(line, category, manufacturer, model) {
+      if (manufacturer || model) return `${manufacturer || ''} ${model || ''}`.trim();
+      if (category && category !== 'Other') return `${category} Asset`;
+      return line.split(/\s{2,}|,|\|/)[0].slice(0, 60) || 'Imported Asset';
+    }
+
+    function titleCase(str) {
+      return String(str || '').replace(/\w\S*/g, s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase());
+    }
+
+    function applyParsedRows() {
+      if (!parsedRows.length) return alert('No parsed rows to add.');
+      parsedRows.forEach(row => { row.id = cryptoRandom(); state.assets.unshift(row); });
+      state.activeId = state.assets[0].id;
+      parsedRows = [];
+      setValue('pdfPreview', '');
+      renderAll();
+      alert('Parsed assets added to the workspace.');
+    }
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderAll() {
+      if (!state.assets.length) {
+        const a = emptyAsset();
+        state.assets = [a];
+        state.activeId = a.id;
+      }
+      if (!state.assets.some(a => a.id === state.activeId)) state.activeId = state.assets[0].id;
+      renderAssetList();
+      renderDetails();
+      renderTable();
+      renderCsvPreview();
+      renderApiPreview();
+      showTab(currentTab);
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
