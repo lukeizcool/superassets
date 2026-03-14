@@ -277,6 +277,9 @@
     .field select,
     .field textarea {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      display: block;
       border: 1px solid var(--line);
       outline: none;
       background: rgba(15, 23, 42, 0.76);
@@ -301,6 +304,7 @@
       min-height: 104px;
       resize: vertical;
       line-height: 1.55;
+      overflow-wrap: anywhere;
     }
 
     .list-shell {
@@ -336,16 +340,25 @@
       align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
+      min-width: 0;
+    }
+
+    .asset-top > div:first-child {
+      min-width: 0;
+      flex: 1 1 auto;
     }
 
     .asset-name {
       font-weight: 800;
       letter-spacing: -0.02em;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .chip {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       border-radius: 999px;
       padding: 5px 10px;
       font-size: 11px;
@@ -356,6 +369,8 @@
       background: rgba(96, 165, 250, 0.12);
       color: #bfdbfe;
       white-space: nowrap;
+      flex: 0 0 auto;
+      max-width: 100%;
     }
 
     .detail-shell {
@@ -469,9 +484,27 @@
       border-radius: 20px;
       background: rgba(2, 6, 23, 0.22);
       padding: 16px;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .small {
+      font-size: 12px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      color: var(--muted);
+    }
+
+    .toolbar,
+    .action-row,
+    .mini-actions,
+    .tabbar {
+      min-width: 0;
+    } {
       font-size: 12px;
     }
 
@@ -479,15 +512,82 @@
       .layout { grid-template-columns: 1fr; }
       .field-grid-3 { grid-template-columns: 1fr 1fr; }
     }
+      .field-grid-3 { grid-template-columns: 1fr 1fr; }
+    }
 
     @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .field-grid-3,
       .field-grid-2 { grid-template-columns: 1fr; }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .asset-top {
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        align-self: flex-start;
+      }
+    }
+      .field-grid-3,
+      .field-grid-2 { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
-      .shell { padding: 14px; }
+      .shell { padding: 12px; }
+      .hero,
+      .panel { padding: 14px; border-radius: 20px; }
+      .stats { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+
+      .hero-top,
+      .detail-header,
+      .panel-header {
+        gap: 12px;
+      }
+
+      .toolbar,
+      .action-row,
+      .mini-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+      }
+
+      .toolbar button,
+      .action-row button,
+      .mini-actions button,
+      .tabbar button {
+        width: 100%;
+      }
+
+      .tabbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .asset-card {
+        padding: 12px;
+      }
+
+      .subpanel {
+        padding: 14px;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        padding: 11px 12px;
+      }
+
+      table {
+        min-width: 760px;
+      }
+    }
       .hero,
       .panel { padding: 16px; border-radius: 22px; }
       .stats { grid-template-columns: 1fr; }
