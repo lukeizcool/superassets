@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AssetFlow - Smart Asset Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
+  <style>
+    :root {
+      --bg-1: #07121f;
+      --bg-2: #0e2732;
+      --bg-3: #123a45;
+      --card: rgba(8, 28, 42, 0.72);
+      --card-strong: rgba(6, 22, 32, 0.9);
+      --line: rgba(120, 196, 214, 0.2);
+      --text: #ecf8ff;
+      --muted: #98bac6;
+      --accent: #37d6bd;
+      --accent-2: #ffb95f;
+      --danger: #ff6d6d;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(55, 214, 189, 0.18), transparent 34%),
+        radial-gradient(circle at 85% 15%, rgba(255, 185, 95, 0.16), transparent 32%),
+        radial-gradient(circle at 40% 85%, rgba(41, 125, 145, 0.2), transparent 40%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+      background-attachment: fixed;
+    }
+
+    .mesh {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+      background-image:
+        linear-gradient(rgba(123, 194, 210, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(123, 194, 210, 0.08) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 85%);
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+      animation: fadeUp .45s ease;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      padding: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.45rem, 1rem + 1.6vw, 2.2rem);
+      letter-spacing: 0.3px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-top: 8px;
+      font-size: 0.95rem;
+      max-width: 780px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
+      gap: 10px;
+      width: min(100%, 450px);
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(18, 56, 72, 0.6), rgba(8, 31, 40, 0.65));
+      border: 1px solid rgba(120, 196, 214, 0.22);
+    }
+
+    .stat-label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-value { margin-top: 5px; font-size: 1.2rem; font-weight: 700; font-family: 'Syne', sans-serif; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+      align-self: start;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .panel-pad { padding: 16px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: rgba(4, 18, 27, 0.8);
+      color: var(--text);
+      border: 1px solid rgba(120, 196, 214, 0.25);
+      border-radius: 12px;
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+      transition: border-color .2s, transform .2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    textarea { min-height: 80px; resize: vertical; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    button, .file-btn {
+      border: 1px solid rgba(120, 196, 214, 0.25);
+      background: linear-gradient(180deg, rgba(20, 64, 80, 0.8), rgba(7, 26, 37, 0.95));
+      color: var(--text);
+      border-radius: 11px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+
+    button:hover, .file-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(55, 214, 189, 0.7);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.26);
+    }
+
+    button.accent {
+      background: linear-gradient(180deg, rgba(55, 214, 189, 0.22), rgba(17, 95, 81, 0.88));
+      border-color: rgba(55, 214, 189, 0.62);
+    }
+
+    button.warn {
+      background: linear-gradient(180deg, rgba(255, 185, 95, 0.24), rgba(101, 63, 11, 0.9));
+      border-color: rgba(255, 185, 95, 0.7);
+    }
+
+    button.danger {
+      background: linear-gradient(180deg, rgba(255, 109, 109, 0.23), rgba(104, 29, 29, 0.95));
+      border-color: rgba(255, 109, 109, 0.68);
+    }
+
+    #assetTable {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(5, 21, 31, 0.86);
+    }
+
+    #assetTable th, #assetTable td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(120, 196, 214, 0.18);
+      text-align: left;
+      font-size: 0.88rem;
+      vertical-align: top;
+    }
+
+    #assetTable th {
+      color: #c8ecf5;
+      font-size: 0.76rem;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      background: rgba(9, 33, 48, 0.88);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .table-wrap {
+      max-height: 65vh;
+      overflow: auto;
+      border: 1px solid rgba(120, 196, 214, 0.2);
+      border-radius: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      border: 1px solid rgba(120, 196, 214, 0.3);
+      background: rgba(12, 44, 58, 0.7);
+    }
+
+    .status-active { border-color: rgba(55, 214, 189, 0.45); background: rgba(55, 214, 189, 0.17); }
+    .status-repair { border-color: rgba(255, 185, 95, 0.5); background: rgba(255, 185, 95, 0.19); }
+    .status-retired { border-color: rgba(255, 109, 109, 0.52); background: rgba(255, 109, 109, 0.2); }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .hint { color: var(--muted); font-size: 0.78rem; line-height: 1.35; margin-top: 7px; }
+    .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.78rem; }
+
+    .file-input { display: none; }
+
+    .footer-log {
+      margin-top: 10px;
+      padding: 10px;
+      min-height: 44px;
+      border-radius: 12px;
+      border: 1px dashed rgba(120, 196, 214, 0.32);
+      background: rgba(9, 35, 47, 0.6);
+      color: #d1f0f7;
+      font-size: 0.86rem;
+      white-space: pre-wrap;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 1040px) {
+      .layout { grid-template-columns: 1fr; }
+      .table-wrap { max-height: 52vh; }
+    }
+
+    @media (max-width: 680px) {
+      .app { padding: 12px; }
+      .stats { grid-template-columns: 1fr; width: 100%; }
+      .toolbar { grid-template-columns: 1fr; }
+      #assetTable th:nth-child(6),
+      #assetTable td:nth-child(6),
+      #assetTable th:nth-child(9),
+      #assetTable td:nth-child(9) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh"></div>
+  <main class="app">
+    <section class="panel hero">
+      <div>
+        <h1>AssetFlow Control Center</h1>
+        <div class="sub">Track assets like a modern EAM platform. Import text-based PDFs, manage lifecycle status, and export directly to SharePoint list workflows.</div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Active</div>
+          <div class="stat-value" id="statActive">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Portfolio Value</div>
+          <div class="stat-value" id="statValue">$0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="stack">
+        <div class="panel panel-pad">
+          <h2 class="section-title">Asset Editor</h2>
+          <div class="field"><label for="assetId">Asset ID</label><input id="assetId" placeholder="AST-10021" /></div>
+          <div class="field"><label for="assetName">Name</label><input id="assetName" placeholder="MacBook Pro 16" /></div>
+          <div class="grid-2">
+            <div class="field"><label for="assetCategory">Category</label><input id="assetCategory" placeholder="Laptop" /></div>
+            <div class="field"><label for="assetSerial">Serial</label><input id="assetSerial" placeholder="C02X..." /></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label for="assetLocation">Location</label><input id="assetLocation" placeholder="HQ / Floor 2" /></div>
+            <div class="field"><label for="assetStatus">Status</label>
+              <select id="assetStatus">
+                <option>Active</option>
+                <option>In Repair</option>
+                <option>Retired</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label for="assetPurchaseDate">Purchase Date</label><input id="assetPurchaseDate" type="date" /></div>
+            <div class="field"><label for="assetValue">Value (USD)</label><input id="assetValue" type="number" step="0.01" placeholder="1500" /></div>
+          </div>
+          <div class="field"><label for="assetOwner">Assigned To</label><input id="assetOwner" placeholder="Alex Morgan" /></div>
+          <div class="field"><label for="assetNotes">Notes</label><textarea id="assetNotes" placeholder="Warranty until 2028..."></textarea></div>
+          <div class="btn-row">
+            <button class="accent" id="saveBtn">Save Asset</button>
+            <button id="clearBtn">Clear</button>
+            <button class="danger" id="deleteBtn">Delete Selected</button>
+          </div>
+        </div>
+
+        <div class="panel panel-pad">
+          <h2 class="section-title">PDF Import</h2>
+          <div class="btn-row">
+            <label class="file-btn" for="pdfFile">Choose PDF</label>
+            <input class="file-input" id="pdfFile" type="file" accept="application/pdf" />
+            <button id="importPdfBtn" class="warn">Import From PDF</button>
+          </div>
+          <div class="hint">Best results come from text PDFs with columns like: ID, Name, Category, Serial, Location, Status, Value.</div>
+        </div>
+
+        <div class="panel panel-pad">
+          <h2 class="section-title">SharePoint Export</h2>
+          <div class="field"><label for="spListUrl">SharePoint List URL</label><input id="spListUrl" placeholder="https://tenant.sharepoint.com/sites/ops/Lists/Assets/AllItems.aspx" /></div>
+          <div class="field"><label for="spSiteUrl">Site URL (REST)</label><input id="spSiteUrl" placeholder="https://tenant.sharepoint.com/sites/ops" /></div>
+          <div class="field"><label for="spListTitle">List Title (REST)</label><input id="spListTitle" placeholder="Assets" /></div>
+          <div class="field"><label for="spToken">OAuth Bearer Token (optional)</label><textarea id="spToken" placeholder="Paste Graph/SharePoint bearer token to push directly via REST"></textarea></div>
+          <div class="field"><label for="spMapping">Field Mapping (JSON)</label>
+            <textarea id="spMapping" class="mono">{
+  "Title": "name",
+  "AssetID": "id",
+  "Category": "category",
+  "SerialNumber": "serial",
+  "AssetLocation": "location",
+  "AssetStatus": "status",
+  "PurchaseDate": "purchaseDate",
+  "AssetValue": "value",
+  "Owner": "owner",
+  "Notes": "notes"
+}</textarea>
+          </div>
+          <div class="btn-row">
+            <button id="openSpBtn">Open List Page</button>
+            <button id="exportCsvBtn" class="accent">Download CSV</button>
+            <button id="exportJsonBtn">Download JSON</button>
+            <button id="pushSpBtn" class="warn">Push via REST</button>
+          </div>
+          <div class="hint">CSV is fastest for bulk import. REST push requires a valid access token and matching SharePoint internal column names.</div>
+        </div>
+      </aside>
+
+      <section class="panel panel-pad">
+        <h2 class="section-title">Asset Registry</h2>
+        <div class="toolbar">
+          <input id="searchInput" placeholder="Search by ID, name, owner, location..." />
+          <select id="filterStatus">
+            <option value="">All Statuses</option>
+            <option>Active</option>
+            <option>In Repair</option>
+            <option>Retired</option>
+          </select>
+          <select id="sortBy">
+            <option value="name">Sort: Name</option>
+            <option value="id">Sort: Asset ID</option>
+            <option value="value">Sort: Value</option>
+            <option value="purchaseDate">Sort: Purchase Date</option>
+            <option value="status">Sort: Status</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table id="assetTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Location</th>
+                <th>Value</th>
+                <th>Purchase</th>
+                <th>Serial</th>
+              </tr>
+            </thead>
+            <tbody id="assetTableBody"></tbody>
+          </table>
+        </div>
+        <div class="footer-log" id="log">Ready.</div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    const STORAGE_KEY = 'assetflow_assets_v1';
+    let assets = loadAssets();
+    let selectedAssetId = null;
+
+    const el = (id) => document.getElementById(id);
+
+    const refs = {
+      assetId: el('assetId'),
+      assetName: el('assetName'),
+      assetCategory: el('assetCategory'),
+      assetSerial: el('assetSerial'),
+      assetLocation: el('assetLocation'),
+      assetStatus: el('assetStatus'),
+      assetPurchaseDate: el('assetPurchaseDate'),
+      assetValue: el('assetValue'),
+      assetOwner: el('assetOwner'),
+      assetNotes: el('assetNotes'),
+      saveBtn: el('saveBtn'),
+      clearBtn: el('clearBtn'),
+      deleteBtn: el('deleteBtn'),
+      searchInput: el('searchInput'),
+      filterStatus: el('filterStatus'),
+      sortBy: el('sortBy'),
+      tableBody: el('assetTableBody'),
+      statTotal: el('statTotal'),
+      statActive: el('statActive'),
+      statValue: el('statValue'),
+      log: el('log'),
+      pdfFile: el('pdfFile'),
+      importPdfBtn: el('importPdfBtn'),
+      spListUrl: el('spListUrl'),
+      spSiteUrl: el('spSiteUrl'),
+      spListTitle: el('spListTitle'),
+      spToken: el('spToken'),
+      spMapping: el('spMapping'),
+      openSpBtn: el('openSpBtn'),
+      exportCsvBtn: el('exportCsvBtn'),
+      exportJsonBtn: el('exportJsonBtn'),
+      pushSpBtn: el('pushSpBtn')
+    };
+
+    if (window.pdfjsLib?.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+    }
+
+    refs.saveBtn.addEventListener('click', saveAsset);
+    refs.clearBtn.addEventListener('click', clearForm);
+    refs.deleteBtn.addEventListener('click', deleteSelectedAsset);
+    refs.searchInput.addEventListener('input', render);
+    refs.filterStatus.addEventListener('change', render);
+    refs.sortBy.addEventListener('change', render);
+    refs.importPdfBtn.addEventListener('click', importFromPdf);
+    refs.openSpBtn.addEventListener('click', openSharePointList);
+    refs.exportCsvBtn.addEventListener('click', exportCsv);
+    refs.exportJsonBtn.addEventListener('click', exportJson);
+    refs.pushSpBtn.addEventListener('click', pushToSharePoint);
+
+    render();
+
+    function log(msg) {
+      refs.log.textContent = msg;
+    }
+
+    function loadAssets() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function persistAssets() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
+    }
+
+    function normalizeAsset(input) {
+      const cleanedValue = Number(input.value || 0);
+      return {
+        id: (input.id || '').trim(),
+        name: (input.name || '').trim(),
+        category: (input.category || '').trim(),
+        serial: (input.serial || '').trim(),
+        location: (input.location || '').trim(),
+        status: (input.status || 'Active').trim() || 'Active',
+        purchaseDate: (input.purchaseDate || '').trim(),
+        value: Number.isFinite(cleanedValue) ? cleanedValue : 0,
+        owner: (input.owner || '').trim(),
+        notes: (input.notes || '').trim()
+      };
+    }
+
+    function formToAsset() {
+      return normalizeAsset({
+        id: refs.assetId.value,
+        name: refs.assetName.value,
+        category: refs.assetCategory.value,
+        serial: refs.assetSerial.value,
+        location: refs.assetLocation.value,
+        status: refs.assetStatus.value,
+        purchaseDate: refs.assetPurchaseDate.value,
+        value: refs.assetValue.value,
+        owner: refs.assetOwner.value,
+        notes: refs.assetNotes.value
+      });
+    }
+
+    function saveAsset() {
+      const item = formToAsset();
+      if (!item.id || !item.name) {
+        log('Asset ID and Name are required.');
+        return;
+      }
+
+      const idx = assets.findIndex(a => a.id === item.id);
+      if (idx >= 0) {
+        assets[idx] = item;
+        log(`Updated asset ${item.id}.`);
+      } else {
+        assets.push(item);
+        log(`Added asset ${item.id}.`);
+      }
+
+      selectedAssetId = item.id;
+      persistAssets();
+      render();
+    }
+
+    function clearForm() {
+      selectedAssetId = null;
+      refs.assetId.value = '';
+      refs.assetName.value = '';
+      refs.assetCategory.value = '';
+      refs.assetSerial.value = '';
+      refs.assetLocation.value = '';
+      refs.assetStatus.value = 'Active';
+      refs.assetPurchaseDate.value = '';
+      refs.assetValue.value = '';
+      refs.assetOwner.value = '';
+      refs.assetNotes.value = '';
+      log('Form cleared.');
+      render();
+    }
+
+    function deleteSelectedAsset() {
+      if (!selectedAssetId) {
+        log('Select an asset from the table first.');
+        return;
+      }
+      assets = assets.filter(a => a.id !== selectedAssetId);
+      persistAssets();
+      const deleted = selectedAssetId;
+      clearForm();
+      log(`Deleted asset ${deleted}.`);
+      render();
+    }
+
+    function getFilteredAssets() {
+      const q = refs.searchInput.value.trim().toLowerCase();
+      const filterStatus = refs.filterStatus.value;
+      const sortBy = refs.sortBy.value;
+
+      const filtered = assets.filter(a => {
+        const statusOk = !filterStatus || a.status === filterStatus;
+        if (!statusOk) return false;
+        if (!q) return true;
+
+        const hay = [a.id, a.name, a.category, a.serial, a.location, a.status, a.owner, a.notes]
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(q);
+      });
+
+      filtered.sort((a, b) => {
+        if (sortBy === 'value') return (b.value || 0) - (a.value || 0);
+        if (sortBy === 'purchaseDate') return (b.purchaseDate || '').localeCompare(a.purchaseDate || '');
+        return String(a[sortBy] || '').localeCompare(String(b[sortBy] || ''));
+      });
+
+      return filtered;
+    }
+
+    function render() {
+      const rows = getFilteredAssets();
+
+      refs.tableBody.innerHTML = rows.map(a => {
+        const selected = a.id === selectedAssetId ? 'style="background: rgba(55, 214, 189, 0.11);"' : '';
+        const statusClass = a.status === 'Active' ? 'status-active' : a.status === 'In Repair' ? 'status-repair' : 'status-retired';
+        return `<tr data-id="${escapeHtml(a.id)}" ${selected}>
+          <td>${escapeHtml(a.id)}</td>
+          <td>${escapeHtml(a.name)}</td>
+          <td>${escapeHtml(a.category)}</td>
+          <td><span class="chip ${statusClass}">${escapeHtml(a.status)}</span></td>
+          <td>${escapeHtml(a.owner)}</td>
+          <td>${escapeHtml(a.location)}</td>
+          <td>${formatMoney(a.value)}</td>
+          <td>${escapeHtml(a.purchaseDate || '')}</td>
+          <td>${escapeHtml(a.serial)}</td>
+        </tr>`;
+      }).join('');
+
+      refs.tableBody.querySelectorAll('tr').forEach(row => {
+        row.addEventListener('click', () => selectAsset(row.getAttribute('data-id')));
+      });
+
+      const totalValue = assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0);
+      const activeCount = assets.filter(a => a.status === 'Active').length;
+      refs.statTotal.textContent = String(assets.length);
+      refs.statActive.textContent = String(activeCount);
+      refs.statValue.textContent = formatMoney(totalValue);
+    }
+
+    function selectAsset(assetId) {
+      const item = assets.find(a => a.id === assetId);
+      if (!item) return;
+      selectedAssetId = item.id;
+      refs.assetId.value = item.id;
+      refs.assetName.value = item.name;
+      refs.assetCategory.value = item.category;
+      refs.assetSerial.value = item.serial;
+      refs.assetLocation.value = item.location;
+      refs.assetStatus.value = item.status;
+      refs.assetPurchaseDate.value = item.purchaseDate;
+      refs.assetValue.value = item.value;
+      refs.assetOwner.value = item.owner;
+      refs.assetNotes.value = item.notes;
+      render();
+      log(`Selected ${item.id}.`);
+    }
+
+    async function importFromPdf() {
+      const file = refs.pdfFile.files?.[0];
+      if (!file) {
+        log('Choose a PDF file first.');
+        return;
+      }
+
+      try {
+        log('Reading PDF text...');
+        const data = new Uint8Array(await file.arrayBuffer());
+
+        if (!window.pdfjsLib) {
+          log('PDF parser not loaded. Check internet/CDN access for pdf.js.');
+          return;
+        }
+
+        const pdf = await window.pdfjsLib.getDocument({ data }).promise;
+        let fullText = '';
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const text = await page.getTextContent();
+          fullText += text.items.map(i => i.str).join(' ') + '\n';
+        }
+
+        const parsed = parseAssetsFromText(fullText);
+        if (!parsed.length) {
+          log('No asset records detected. Try a clearer, text-based PDF table.');
+          return;
+        }
+
+        let created = 0;
+        let updated = 0;
+        parsed.forEach(item => {
+          if (!item.id) return;
+          const idx = assets.findIndex(a => a.id === item.id);
+          if (idx >= 0) {
+            assets[idx] = { ...assets[idx], ...item };
+            updated++;
+          } else {
+            assets.push(item);
+            created++;
+          }
+        });
+
+        persistAssets();
+        render();
+        log(`PDF import complete. Added ${created}, updated ${updated}.`);
+      } catch (err) {
+        log(`PDF import failed: ${err.message}`);
+      }
+    }
+
+    function parseAssetsFromText(rawText) {
+      const text = rawText.replace(/\r/g, '\n');
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      if (!lines.length) return [];
+
+      const headerIndex = lines.findIndex(l => /asset\s*id|serial|category|location|status|name/i.test(l));
+      const dataLines = headerIndex >= 0 ? lines.slice(headerIndex) : lines;
+      const first = dataLines[0] || '';
+
+      let delim = /\t/;
+      if (first.includes('|')) delim = /\|/;
+      else if (first.includes(',')) delim = /,/;
+      else if (/\s{2,}/.test(first)) delim = /\s{2,}/;
+
+      const splitLine = (line) => line.split(delim).map(s => s.trim()).filter(Boolean);
+
+      let headers = splitLine(dataLines[0]).map(s => s.toLowerCase());
+      const maybeHeader = headers.some(h => /asset|name|status|serial|category|location|value|owner|purchase/.test(h));
+      const rows = maybeHeader ? dataLines.slice(1).map(splitLine) : dataLines.map(splitLine);
+      if (!maybeHeader) {
+        headers = ['id', 'name', 'category', 'serial', 'location', 'status', 'value', 'owner', 'purchaseDate'];
+      }
+
+      const keyMap = {
+        id: ['id', 'asset id', 'assetid', 'tag', 'asset'],
+        name: ['name', 'asset name', 'title', 'description'],
+        category: ['category', 'type', 'class'],
+        serial: ['serial', 'serial number', 'sn'],
+        location: ['location', 'site', 'room', 'department'],
+        status: ['status', 'state', 'condition'],
+        purchaseDate: ['purchase date', 'purchased', 'acquired', 'date'],
+        value: ['value', 'cost', 'price', 'amount'],
+        owner: ['owner', 'assigned to', 'assignee', 'custodian'],
+        notes: ['notes', 'comment', 'remarks']
+      };
+
+      const colIndex = {};
+      Object.keys(keyMap).forEach(field => {
+        const idx = headers.findIndex(h => keyMap[field].some(k => h.includes(k)));
+        if (idx >= 0) colIndex[field] = idx;
+      });
+
+      const out = [];
+      for (const cols of rows) {
+        if (!cols.length) continue;
+        const id = readCol(cols, colIndex.id, 0);
+        const name = readCol(cols, colIndex.name, 1);
+        if (!id || !name) continue;
+
+        const row = normalizeAsset({
+          id,
+          name,
+          category: readCol(cols, colIndex.category, 2),
+          serial: readCol(cols, colIndex.serial, 3),
+          location: readCol(cols, colIndex.location, 4),
+          status: normalizeStatus(readCol(cols, colIndex.status, 5)),
+          purchaseDate: normalizeDate(readCol(cols, colIndex.purchaseDate, 8)),
+          value: parseNumber(readCol(cols, colIndex.value, 6)),
+          owner: readCol(cols, colIndex.owner, 7),
+          notes: readCol(cols, colIndex.notes, 9)
+        });
+        out.push(row);
+      }
+      return dedupeById(out);
+    }
+
+    function readCol(cols, idx, fallbackIdx) {
+      if (Number.isInteger(idx) && idx < cols.length) return cols[idx];
+      return fallbackIdx < cols.length ? cols[fallbackIdx] : '';
+    }
+
+    function normalizeDate(v) {
+      if (!v) return '';
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) return '';
+      return d.toISOString().slice(0, 10);
+    }
+
+    function normalizeStatus(status) {
+      const s = (status || '').toLowerCase();
+      if (s.includes('repair') || s.includes('maint')) return 'In Repair';
+      if (s.includes('retired') || s.includes('disposed') || s.includes('inactive')) return 'Retired';
+      return 'Active';
+    }
+
+    function parseNumber(v) {
+      const n = Number(String(v || '').replace(/[^\d.-]/g, ''));
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function dedupeById(list) {
+      const map = new Map();
+      list.forEach(item => {
+        if (item.id) map.set(item.id, item);
+      });
+      return [...map.values()];
+    }
+
+    function exportCsv() {
+      if (!assets.length) {
+        log('No assets to export.');
+        return;
+      }
+      const cols = ['id', 'name', 'category', 'serial', 'location', 'status', 'purchaseDate', 'value', 'owner', 'notes'];
+      const rows = [cols.join(',')]
+        .concat(assets.map(a => cols.map(c => csv(a[c])).join(',')));
+
+      downloadFile('assets_export.csv', rows.join('\n'), 'text/csv;charset=utf-8;');
+      log(`CSV exported (${assets.length} rows).`);
+    }
+
+    function exportJson() {
+      if (!assets.length) {
+        log('No assets to export.');
+        return;
+      }
+      downloadFile('assets_export.json', JSON.stringify(assets, null, 2), 'application/json;charset=utf-8;');
+      log(`JSON exported (${assets.length} items).`);
+    }
+
+    function openSharePointList() {
+      const url = refs.spListUrl.value.trim();
+      if (!url) {
+        log('Enter a SharePoint List URL first.');
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+      log('SharePoint list page opened in a new tab.');
+    }
+
+    async function pushToSharePoint() {
+      if (!assets.length) {
+        log('No assets to push.');
+        return;
+      }
+
+      const site = refs.spSiteUrl.value.trim().replace(/\/$/, '');
+      const listTitle = refs.spListTitle.value.trim();
+      const token = refs.spToken.value.trim();
+
+      if (!site || !listTitle || !token) {
+        log('Site URL, List Title, and OAuth token are required for REST push.');
+        return;
+      }
+
+      let mapping;
+      try {
+        mapping = JSON.parse(refs.spMapping.value.trim());
+      } catch {
+        log('Field mapping JSON is invalid.');
+        return;
+      }
+
+      try {
+        log('Resolving SharePoint list type...');
+        const typeRes = await fetch(`${site}/_api/web/lists/getbytitle('${encodeURIComponent(listTitle)}')?$select=ListItemEntityTypeFullName`, {
+          headers: {
+            'Accept': 'application/json;odata=verbose',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!typeRes.ok) {
+          throw new Error(`List type lookup failed (${typeRes.status}).`);
+        }
+
+        const typeJson = await typeRes.json();
+        const entityType = typeJson?.d?.ListItemEntityTypeFullName;
+        if (!entityType) throw new Error('Could not resolve ListItemEntityTypeFullName.');
+
+        let success = 0;
+        let failed = 0;
+
+        for (const asset of assets) {
+          const payload = buildSharePointPayload(asset, mapping, entityType);
+          const res = await fetch(`${site}/_api/web/lists/getbytitle('${encodeURIComponent(listTitle)}')/items`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json;odata=verbose',
+              'Content-Type': 'application/json;odata=verbose',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) success++;
+          else failed++;
+        }
+
+        log(`SharePoint push finished. Created ${success}, failed ${failed}.`);
+      } catch (err) {
+        log(`SharePoint push error: ${err.message}`);
+      }
+    }
+
+    function buildSharePointPayload(asset, mapping, entityType) {
+      const payload = { __metadata: { type: entityType } };
+      Object.entries(mapping).forEach(([spField, key]) => {
+        let value = asset[key] ?? '';
+        if (key === 'value') value = Number(value || 0);
+        if (key === 'purchaseDate' && value) value = new Date(value).toISOString();
+        payload[spField] = value;
+      });
+      return payload;
+    }
+
+    function csv(value) {
+      const str = String(value ?? '');
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+
+    function downloadFile(fileName, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+        .format(Number(value || 0));
+    }
+  </script>
+</body>
+</html>
+
+
